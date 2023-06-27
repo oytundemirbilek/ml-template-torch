@@ -1,0 +1,17 @@
+{
+    "dataset": "mock_dataset",
+    "timepoint": null,
+    "n_epochs": 25,
+    "n_folds": 5,
+    "batch_size": 1,
+    "learning_rate": 0.001,
+    "weight_decay": 0.001,
+    "patience": null,
+    "validation_period": 1,
+    "modelsaving_period": 5,
+    "loss_weight": 1.0,
+    "loss_name": "mse_loss",
+    "model_name": "foo_model_name",
+    "model_save_path": "./models",
+    "model_params_save_path": "./models"
+}

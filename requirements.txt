@@ -1,0 +1,6 @@
+numpy
+pandas
+sklearn
+freesurfer-stats
+torch==1.12.1
+torch-geometric==2.2.0
