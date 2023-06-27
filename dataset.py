@@ -185,7 +185,7 @@ class BaseDataset(Dataset):
     def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__} dataset ({self.mode}) with"
-            f" n_views={self.n_features}, n_samples={self.n_samples_in_split}, "
+            f" n_features={self.n_features}, n_samples={self.n_samples_in_split}, "
             f"current fold:{self.current_fold+1}/{self.n_folds}"
         )
 
