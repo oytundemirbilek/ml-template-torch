@@ -1,6 +1,4 @@
 numpy
 pandas
-sklearn
-freesurfer-stats
+scikit-learn
 torch==1.12.1
-torch-geometric==2.2.0

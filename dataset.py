@@ -22,36 +22,7 @@ def mock_batch_collate_fn(batch_data: List[Tensor]) -> Tensor:
 
 
 class BaseDataset(Dataset):
-    """
-    Base class for common functionalities of all datasets.
-
-    Examples
-    --------
-    Data loading with batches:
-
-    >>> from torch_geometric.loader import DenseDataLoader as PygDataLoader
-    >>> tr_dataset = GraphDataset(hemisphere="left", mode="train")
-    >>> tr_dataloader = PygDataLoader(tr_dataset, batch_size=5)
-    >>> for g in tr_dataloader:
-    ...     print(g)
-
-    Data loading without batching (no batch dimension):
-
-    >>> from torch_geometric.loader import DataLoader as PygDataLoader
-    >>> tr_dataset = GraphDataset(hemisphere="left", mode="train")
-    >>> tr_dataloader = PygDataLoader(tr_dataset, batch_size=1)
-    >>> for g in tr_dataloader:
-    ...     print(g)
-
-    Data loading with batches but a view selection, useful if the task is graph-to-graph prediction:
-
-    >>> from torch.utils.data import DataLoader
-    >>> tr_dataset = GraphDataset(hemisphere="left", mode="train")
-    >>> tr_dataloader = DataLoader(tr_dataset, batch_size=5, collate_fn=graph_to_graph_batch_collate_fn)
-    >>> for g1, g2 in tr_dataloader:
-    ...     print(g1)
-
-    """
+    """Base class for common functionalities of all datasets."""
 
     def __init__(
         self,
