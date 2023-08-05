@@ -12,14 +12,16 @@ from dataset import MockDataset, mock_batch_collate_fn
 from model import MockModel
 from evaluation import MockLoss
 
+from torch.backends import cudnn
+
 # We used 35813 (part of the Fibonacci Sequence) as the seed when we conducted experiments
 np.random.seed(35813)
 torch.manual_seed(35813)
 
 # These two options should be seed to ensure reproducible (If you are using cudnn backend)
 # https://pytorch.org/docs/stable/notes/randomness.html
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
+cudnn.deterministic = True
+cudnn.benchmark = False
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -92,12 +94,9 @@ class BaseTrainer:
         model.eval()
         val_losses = []
         for input_graph, target_graph in val_dataloader:
-            # TODO: define better model. This is only a temp model for now.
             pred_graph = model(input_graph)
-            # TODO: Find loss function. This is only a temp loss for now.
             val_loss = self.loss_fn(pred_graph, target_graph)
             val_losses.append(val_loss)
-            # TODO: Define other evaluation metrics and measure them during validation.
 
         model.train()
         return torch.stack(val_losses).mean().item()
