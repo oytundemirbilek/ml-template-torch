@@ -32,7 +32,7 @@ class BaseInferer:
         metric_name: str = "mock_loss",
     ) -> None:
         """
-        Initialize the inference (testing) setup.
+        Initialize the inference (or testing) setup.
 
         Parameters
         ----------

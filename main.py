@@ -10,7 +10,7 @@ def main() -> None:
         validation_period=1,
         learning_rate=0.001,
         loss_weight=1.0,
-        model_name="mock_model1",
+        model_name="mock_model_experiment",
     )
     exp.train_model()
     exp.run_inference()

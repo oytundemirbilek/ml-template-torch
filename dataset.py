@@ -34,7 +34,7 @@ class BaseDataset(Dataset):
         in_memory: bool = False,
     ):
         """
-        Dataset class to initialize data operations and preprocessing.
+        Dataset class to initialize data operations, cross validation and preprocessing.
 
         Parameters
         ----------
@@ -61,26 +61,26 @@ class BaseDataset(Dataset):
         self.path_to_data = path_to_data
         self.current_fold = current_fold
 
-        if not mode == "inference":
-            self.samples_labels = self.get_labels()
-
         self.n_samples_total = self.get_number_of_samples()
 
         # Keep half of the data as 'unseen' to be used in inference.
         self.seen_data_indices, self.unseen_data_indices = self.get_fold_indices(
-            self.n_samples_total, 2, 0
+            self.n_samples_total, 2
         )
+
+        if not mode == "inference" and in_memory:
+            self.samples_labels = self.get_labels()
 
         if self.in_memory:
             self.loaded_samples = self.get_all_samples()
 
         if mode == "train" or mode == "validation":
             # Here split the 'seen' data to train and validation.
-            self.seen_samples_labels = self.samples_labels[self.seen_data_indices]
             if self.in_memory:
+                self.seen_samples_labels = self.samples_labels[self.seen_data_indices]
                 self.seen_samples_data = self.loaded_samples[self.seen_data_indices]
 
-            self.n_samples_seen = len(self.samples_labels)
+            self.n_samples_seen = len(self.seen_data_indices)
             self.tr_indices, self.val_indices = self.get_fold_indices(
                 self.n_samples_seen,
                 self.n_folds,
@@ -89,36 +89,38 @@ class BaseDataset(Dataset):
 
         if mode == "train":
             self.selected_indices = self.tr_indices
-            self.samples_labels = self.seen_samples_labels[self.tr_indices]
             if self.in_memory:
+                self.samples_labels = self.seen_samples_labels[self.tr_indices]
                 self.loaded_samples = self.seen_samples_data[self.tr_indices]
         elif mode == "validation":
             self.selected_indices = self.val_indices
-            self.samples_labels = self.seen_samples_labels[self.val_indices]
             if self.in_memory:
+                self.samples_labels = self.seen_samples_labels[self.val_indices]
                 self.loaded_samples = self.seen_samples_data[self.val_indices]
         elif mode == "test":
             self.selected_indices = self.unseen_data_indices
-            self.samples_labels = self.samples_labels[self.unseen_data_indices]
             if self.in_memory:
+                self.samples_labels = self.samples_labels[self.unseen_data_indices]
                 self.loaded_samples = self.loaded_samples[self.unseen_data_indices]
         elif not mode == "inference":
             raise ValueError(
                 "mode should be 'train', 'validation', 'test', or 'inference'"
             )
-
-        self.n_samples_in_split = len(self.selected_indices)
-
-    def __getitem__(self, index: int) -> Tuple[Tensor, Optional[int]]:
-        if self.mode == "inference":
-            label = None
+        if mode == "inference":
+            self.n_samples_in_split = self.n_samples_total
         else:
-            label = self.samples_labels[index]
+            self.n_samples_in_split = len(self.selected_indices)
+
+    def __getitem__(self, index: int) -> Tuple[Tensor, Optional[Tensor]]:
         if self.in_memory:
-            sample = self.loaded_samples[index]
+            if self.mode == "inference":
+                label = None
+            else:
+                label = torch.from_numpy(self.samples_labels[index]).to(device)
+            sample_data = torch.from_numpy(self.loaded_samples[index]).to(device)
         else:
-            sample = self.get_sample_data(index)
-        return self.preprocess(sample), label
+            sample_data, label = self.get_sample_data(index)
+        return self.preprocess(sample_data), label
 
     def __len__(self) -> int:
         return self.n_samples_in_split
@@ -128,7 +130,9 @@ class BaseDataset(Dataset):
         Method to find how many samples are expected in ALL dataset.
         E.g., number of images in the target folder, number of rows in dataframe.
         """
-        return len(os.listdir(self.path_to_data))
+        with open("./datasets/mock_dataset.csv") as fp:
+            n_lines = len(fp.readlines())
+        return n_lines - 1
 
     def get_labels(self) -> np.ndarray:
         """
@@ -139,10 +143,9 @@ class BaseDataset(Dataset):
         labels: numpy ndarray
             An array stores the labels for each sample.
         """
-        mock_dataset_row_count = 42
-        return np.random.choice([0, 1], size=mock_dataset_row_count)
+        return pd.read_csv(self.path_to_data)["Label"].values
 
-    def get_sample_data(self, index: int) -> Tensor:
+    def get_sample_data(self, index: int) -> Tuple[Tensor, Tensor]:
         """
         If we cannot or do not want to store all the samples in memory, we need to
         read the data based on selected indices (train, validation or test).
@@ -158,10 +161,22 @@ class BaseDataset(Dataset):
         tensor: torch Tensor
             A torch tensor represents the data for the sample.
         """
-        skip = np.arange(self.n_samples_in_split) - self.selected_indices[index]
-        return torch.from_numpy(
-            pd.read_csv(self.path_to_data, skiprows=skip).drop("Sample ID").values
+
+        def skip_unselected(row_idx: int) -> bool:
+            if row_idx == 0:
+                return False
+            return row_idx != (self.selected_indices[index] + 1)
+
+        sample_data_row = pd.read_csv(self.path_to_data, skiprows=skip_unselected)
+        sample_data = (
+            torch.from_numpy(
+                sample_data_row.drop(["Sample ID", "Label"], axis="columns").values
+            )
+            .float()
+            .to(device)
         )
+        sample_label = torch.from_numpy(sample_data_row["Label"].values).to(device)
+        return sample_data, sample_label
 
     def preprocess(self, data: Tensor) -> Tensor:
         return data
@@ -176,7 +191,7 @@ class BaseDataset(Dataset):
         all_data: np.ndarray
             A numpy array represents all data.
         """
-        return pd.read_csv(self.path_to_data).drop("Sample ID").values
+        return pd.read_csv(self.path_to_data).drop(["Sample ID", "Label"]).values
 
     def get_fold_indices(
         self, all_data_size: int, n_folds: int, fold_id: int = 0

@@ -11,6 +11,7 @@ from torch.nn.modules.loss import _Loss
 from dataset import MockDataset, mock_batch_collate_fn
 from model import MockModel
 from evaluation import MockLoss
+from utils import EarlyStopping
 
 from torch.backends import cudnn
 
@@ -47,7 +48,6 @@ class BaseTrainer:
         weight_decay: float = 0.001,
         batch_size: int = 1,
         validation_period: int = 5,
-        modelsaving_period: int = 5,
         patience: Optional[int] = None,
         # Model related:
         n_folds: int = 5,
@@ -65,12 +65,13 @@ class BaseTrainer:
         self.weight_decay = weight_decay
         self.patience = patience
         self.validation_period = validation_period
-        self.modelsaving_period = modelsaving_period
         self.loss_weight = loss_weight
         self.loss_name = loss_name
         self.layer_sizes = layer_sizes
         self.model_name = model_name
         self.model_save_path = os.path.join(FILE_PATH, "models", model_name)
+        if not os.path.exists(self.model_save_path):
+            os.makedirs(self.model_save_path)
 
         self.model_params_save_path = os.path.join(
             FILE_PATH, "models", model_name + "_params.json"
@@ -93,9 +94,9 @@ class BaseTrainer:
     def validate(self, model: Module, val_dataloader: DataLoader) -> float:
         model.eval()
         val_losses = []
-        for input_graph, target_graph in val_dataloader:
-            pred_graph = model(input_graph)
-            val_loss = self.loss_fn(pred_graph, target_graph)
+        for input_data, target_label in val_dataloader:
+            prediction = model(input_data)
+            val_loss = self.loss_fn(prediction, target_label)
             val_losses.append(val_loss)
 
         model.train()
@@ -131,12 +132,12 @@ class BaseTrainer:
         optimizer = torch.optim.AdamW(
             model.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay
         )
-
+        early_stopping = EarlyStopping(self.patience)
+        best_loss = 99999999999999999999999.0
         for epoch in range(self.n_epochs):
             tr_losses = []
             for input_data, target_data in tr_dataloader:
                 pred_data = model(input_data)
-                # TODO: Find loss function. This is only a mock loss for now.
                 tr_loss = self.loss_fn(pred_data, target_data)
                 optimizer.zero_grad()
                 tr_loss.backward()
@@ -149,10 +150,17 @@ class BaseTrainer:
                     f"Epoch: {epoch+1}/{self.n_epochs} | Tr.Loss: {avg_tr_loss} | Val.Loss: {val_loss}"
                 )
                 self.val_loss_per_epoch.append(val_loss)
-            if (epoch + 1) % self.modelsaving_period == 0:
-                torch.save(model.state_dict(), self.model_save_path + ".pth")
+                early_stopping.step(val_loss)
+                if early_stopping.check_patience():
+                    break
 
-        torch.save(model.state_dict(), self.model_save_path + ".pth")
+                if val_loss < best_loss:
+                    torch.save(
+                        model.state_dict(),
+                        os.path.join(self.model_save_path, f"fold{current_fold}.pth"),
+                    )
+                    best_loss = val_loss
+
         return model
 
     def select_model(self) -> None:

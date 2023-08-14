@@ -11,7 +11,7 @@ class MockLoss(_Loss):
         reduction: str = "mean",
         another_loss_weight: float = 1.0,
     ) -> None:
-        super().__init__(reduction)
+        super().__init__(reduction=reduction)
         self.another_loss_weight = another_loss_weight
         self.batch_first = batch_first
         self.reduction = reduction

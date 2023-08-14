@@ -57,4 +57,4 @@ class Experiment:
             }
         )
         # Index of the dataframe will indicate the fold id.
-        results_df.to_csv(self.results_save_path + ".csv", index=True)
+        results_df.to_csv(self.results_save_path + "_results.csv", index=True)
