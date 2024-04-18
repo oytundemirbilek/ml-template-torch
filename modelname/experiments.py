@@ -1,10 +1,15 @@
+"""Module to wrap experiments, automatically handle cross validation and collect results."""
+
+from __future__ import annotations
+
 import os
+from typing import Any
+
 import pandas as pd
-from typing import List, Any
 from torch.nn import Module
 
-from train import BaseTrainer
-from inference import BaseInferer
+from modelname.inference import BaseInferer
+from modelname.train import BaseTrainer
 
 FILE_PATH = os.path.dirname(__file__)
 
@@ -16,16 +21,13 @@ class Experiment:
         """Initialize with kwargs, all parameters for the Trainer."""
         self.kwargs = kwargs
         self.results_save_path = os.path.join(
-            FILE_PATH, "results", self.kwargs["model_name"]
+            FILE_PATH, "..", "results", self.kwargs["model_name"]
         )
-        self.model_per_fold: List[Module] = []
-        self.val_result_per_fold: List[float] = []
-        self.test_result_per_fold: List[float] = []
+        self.model_per_fold: list[Module] = []
+        self.val_result_per_fold: list[float] = []
+        self.test_result_per_fold: list[float] = []
         self.trainer = BaseTrainer(**self.kwargs)
-        if "n_folds" in self.kwargs.keys():
-            self.n_folds = self.kwargs["n_folds"]
-        else:
-            self.n_folds = 5
+        self.n_folds = self.kwargs.get("n_folds", 5)
 
     def train_model(self) -> None:
         """Run training loop for each cross validation fold."""

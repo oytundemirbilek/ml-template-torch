@@ -1,15 +1,17 @@
+"""Module for inference and testing scripts."""
+
+from __future__ import annotations
+
 import os
+from typing import Any
+
 import torch
 from torch.nn import Module
 from torch.utils.data import DataLoader
-from typing import List, Dict, Any, Optional
 
-from model import MockModel
-from evaluation import MockLoss
-from dataset import (
-    MockDataset,
-    mock_batch_collate_fn,
-)
+from modelname.dataset import MockDataset, mock_batch_collate_fn
+from modelname.evaluation import MockLoss
+from modelname.model import MockModel
 
 DATASETS = {
     "mock_dataset": MockDataset,
@@ -25,10 +27,10 @@ class BaseInferer:
     def __init__(
         self,
         dataset: str,
-        model: Optional[Module] = None,
-        model_path: Optional[str] = None,
-        model_params: Optional[Dict[str, Any]] = None,
-        out_path: Optional[str] = None,
+        model: Module | None = None,
+        model_path: str | None = None,
+        model_params: dict[str, Any] | None = None,
+        out_path: str | None = None,
         metric_name: str = "mock_loss",
     ) -> None:
         """
@@ -56,12 +58,10 @@ class BaseInferer:
         self.model_params = model_params
         self.model: Module
         if model is None:
-            assert (
-                model_params is not None
-            ), "Specify the model or: specify model_path and model_params"
-            assert (
-                model_path is not None
-            ), "Specify the model or: specify model_path and model_params"
+            if model_params is None:
+                raise ValueError("Specify a model or model params and its path.")
+            if model_path is None:
+                raise ValueError("Specify a model or model params and its path.")
             self.model = self.load_model_from_file(model_path, model_params)
         else:
             self.model = model
@@ -74,7 +74,7 @@ class BaseInferer:
             raise NotImplementedError()
 
     @torch.no_grad()
-    def run(self, test_split_only: bool = True) -> List[float]:
+    def run(self, test_split_only: bool = True) -> list[float]:
         """
         Run inference loop whether for testing purposes or in-production.
 
@@ -93,10 +93,7 @@ class BaseInferer:
         self.model.eval()
         test_losses = []
 
-        if test_split_only:
-            mode = "test"
-        else:
-            mode = "inference"
+        mode = "test" if test_split_only else "inference"
 
         test_dataset = DATASETS[self.dataset](mode=mode, n_folds=1)
         test_dataloader = DataLoader(
@@ -115,8 +112,9 @@ class BaseInferer:
         self.model.train()
         return test_losses
 
+    @staticmethod
     def load_model_from_file(
-        self, model_path: str, model_params: Dict[str, Any]
+        model_path: str, model_params: dict[str, Any]
     ) -> Module:
         """
         Load a pretrained model from file.

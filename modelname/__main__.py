@@ -1,7 +1,10 @@
-from experiments import Experiment
+"""Entrypoint for the CLI."""
+
+from modelname.experiments import Experiment
 
 
 def main() -> None:
+    """Run main function from CLI."""
     exp = Experiment(
         dataset="mock_dataset",
         timepoint=None,

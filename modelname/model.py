@@ -1,20 +1,22 @@
-# Our solution
-from typing import List
+"""Module to define neural network, which is our solution."""
+
+from __future__ import annotations
+
 from torch import Tensor
-from torch.nn import Module, Sequential, Linear, ReLU
+from torch.nn import Linear, Module, ReLU, Sequential
 
 
 class MockModel(Module):
-    """ """
+    """Your model that predicts something."""
 
     def __init__(
         self,
         in_features: int,
         out_features: int,
         batch_size: int,
-        layer_sizes: List[int],
+        layer_sizes: tuple[int, ...],
     ) -> None:
-        super(MockModel, self).__init__()
+        super().__init__()
 
         self.in_features = in_features
         self.out_features = out_features
@@ -29,4 +31,5 @@ class MockModel(Module):
         )
 
     def forward(self, input_data: Tensor) -> Tensor:
+        """Forward pass of the network."""
         return self.layers(input_data)

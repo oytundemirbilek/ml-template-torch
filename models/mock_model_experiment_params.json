@@ -15,6 +15,6 @@
         16
     ],
     "model_name": "mock_model_experiment",
-    "model_save_path": "/home/oytun/GitRepos/ml-template-torch/models/mock_model_experiment",
-    "model_params_save_path": "/home/oytun/GitRepos/ml-template-torch/models/mock_model_experiment_params.json"
+    "model_save_path": "/home/oytun/GitRepos/ml-template-torch/modelname/../models/mock_model_experiment",
+    "model_params_save_path": "/home/oytun/GitRepos/ml-template-torch/modelname/../models/mock_model_experiment_params.json"
 }

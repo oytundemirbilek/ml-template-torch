@@ -1,0 +1,240 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm[tool]>=7"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "modelname"
+version = "0.0.1"
+description = ""
+keywords = [""]
+readme = "README.rst"
+authors = [{ name="Oytun Demirbilek", email="oytun1996@gmail.com" }]
+license = { file = "LICENSE" }
+requires-python = ">=3.7"
+classifiers = [
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed"
+]
+
+dependencies = [
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "torch",
+    "torchvision",
+    "matplotlib",
+    "seaborn",
+]
+
+[project.urls]
+"Code Repository" = "https://github.com/"
+"Documentation" = "https://pages.github.com"
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+    "pytest-xdist",
+    "hypothesis[pytest]",
+    "tox"
+]
+docs = [
+    "sphinx",
+    "sphinx-toolbox",
+    "sphinx-rtd-theme",
+    "furo",
+]
+lint = [
+    "isort",
+    "black",
+    "pyupgrade",
+    "flake8",
+    "pep8-naming",
+    "flake8-pyproject",
+    "flake8-noqa",
+    "flake8-bugbear",
+    "flake8-builtins",
+    "flake8-docstrings",
+    "flake8-comprehensions",
+    "flake8-simplify",
+    "flake8-logging",
+    "pyright",
+    "bandit",
+    "ruff",
+    "mypy",
+    "types-setuptools",
+    "pydantic",
+    "yamllint",
+    "codespell[toml]",
+    "gitlint",
+    "pre-commit",
+]
+
+[project.scripts]
+modelname = "modelname.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["modelname*", "datasets*"]
+namespaces = false
+
+[tool.isort]
+verbose = false
+skip_gitignore = true
+honor_noqa = true
+profile = "black"
+
+[tool.black]
+verbose = false
+
+[tool.mypy]
+verbosity = 0
+python_version = "3.10"
+strict = true
+warn_unused_configs = true
+warn_no_return = true
+warn_return_any = false
+disallow_any_generics = false
+ignore_missing_imports = true
+follow_imports = "silent"
+pretty = true
+incremental = true
+show_column_numbers = true
+show_error_codes = true
+show_error_code_links = true
+
+[tool.flake8]
+format = "default"
+statistics = true
+show-source = true
+count = true
+extend-exclude = [".venv"]
+extend-ignore = [
+    "W503",
+    "E203",
+    "D107",
+    "LOG011",
+    "NQA102",
+]
+per-file-ignores = [
+    "__init__.py: F401,F403",
+    "test_*.py: S101",
+]
+max-line-length = 120
+noqa-require-code = true
+max-doc-length = 120
+doctests = true
+max-complexity = 18
+max-locals = 25
+max-branches = 20
+docstring-convention = "numpy"
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv"]
+verbose = true
+
+[tool.ruff]
+target-version = "py39"
+extend-include = ["*.ipynb", ".*_version.py"]
+output-format = "grouped"
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "W",
+    "F",
+    "PL",
+    "C90",
+    "UP",
+    "B",
+    "N",
+    "A",
+    "Q",
+    "C4",
+    "SIM",
+    "LOG",
+    "I",
+    "D",
+    "S",
+    "PGH",
+    "PT",
+]
+extend-ignore = [
+    "E203",
+    "D107"
+]
+
+mccabe.max-complexity = 18
+pylint.max-branches = 20
+pydocstyle.convention = "numpy"
+pylint.max-args = 15
+pylint.max-positional-args = 15
+preview = true
+
+[tool.ruff.extend-per-file-ignores]
+"__init__.py" = ["F401","F403"]
+"test_*.py" = ["S101", "PLR2004"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+required_plugins = ["pytest-cov", "pytest-xdist", "hypothesis"]
+log_cli = true
+addopts = [
+    "--verbose",
+    "-r",
+    "A",
+    "--capture=no",
+    "--cache-clear",
+    "--strict-config",
+    "--strict-markers",
+    "--showlocals",
+    "--junit-xml=./logs/pytest_junit.xml",
+    "--tb=line",
+    "--cov-config=pyproject.toml",
+    "--cov",
+    "--cov-branch",
+    "--cov-report=term-missing",
+    "--cov-report=lcov:./logs/coverage.lcov",
+    "--cov-report=xml:./logs/coverage.xml",
+    "--cov-report=json:./logs/coverage.json",
+    "--cov-report=html:./logs/htmlcov",
+    "--numprocesses=1",
+]
+testpaths = ["tests/"]
+log_file = ".logs/pytest.log"
+log_file_level = "INFO"
+junit_logging = "all"
+
+[tool.coverage]
+run.disable_warnings = ["no-data-collected"]
+run.branch = true
+run.omit = ["tests/*"]
+report.show_missing = true
+report.fail_under = 70
+report.exclude_also = ["pragma: no cover", "if TYPE_CHECKING:"]
+report.ignore_errors = true
+html.show_contexts = true
+html.skip_covered = false
+
+[tool.pyright]
+pythonVersion = "3.x"
+
+[tool.codespell]
+count = true
+summary = false
+check-filenames = true
+check-hidden = false
+quiet-level = 2
+builtin = "clear,rare,informal"
+ignore-words = ".spellignore"
+skip = "logs,*.json,*.csv,*.crt"

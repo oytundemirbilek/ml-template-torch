@@ -1,10 +1,12 @@
-# Metrics and Loss
+"""Module that provides calculations for loss functions and evaluation metrics."""
 import torch
 from torch import Tensor
 from torch.nn.modules.loss import _Loss
 
 
 class MockLoss(_Loss):
+    """Loss that combines Loss 1 and Loss 2."""
+
     def __init__(
         self,
         batch_first: bool = True,
@@ -17,6 +19,7 @@ class MockLoss(_Loss):
         self.reduction = reduction
 
     def forward(self, input_data: Tensor, target_data: Tensor) -> Tensor:
+        """Calculate the total loss."""
         if self.batch_first:
             loss = torch.sqrt(torch.square(input_data - target_data).sum(dim=(1, 2)))
         else:

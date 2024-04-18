@@ -1,19 +1,19 @@
+"""Module for training script."""
+
 import json
 import os
-from typing import Optional, List
 
 import numpy as np
 import torch
-from torch.nn import Module
-from torch.utils.data import DataLoader
-from torch.nn.modules.loss import _Loss
-
-from dataset import MockDataset, mock_batch_collate_fn
-from model import MockModel
-from evaluation import MockLoss
-from utils import EarlyStopping
-
 from torch.backends import cudnn
+from torch.nn import Module
+from torch.nn.modules.loss import _Loss
+from torch.utils.data import DataLoader
+
+from modelname.dataset import MockDataset, mock_batch_collate_fn
+from modelname.evaluation import MockLoss
+from modelname.model import MockModel
+from modelname.utils import EarlyStopping
 
 # We used 35813 (part of the Fibonacci Sequence) as the seed when we conducted experiments
 np.random.seed(35813)
@@ -35,23 +35,23 @@ DATASETS = {
 
 
 class BaseTrainer:
-    """Wrapper around training function to save all the training parameters"""
+    """Wrapper around training function to save all the training parameters."""
 
     def __init__(
         self,
         # Data related:
         dataset: str,
-        timepoint: Optional[str],
+        timepoint: str | None,
         # Training related:
         n_epochs: int,
         learning_rate: float,
         weight_decay: float = 0.001,
         batch_size: int = 1,
         validation_period: int = 5,
-        patience: Optional[int] = None,
+        patience: int | None = None,
         # Model related:
         n_folds: int = 5,
-        layer_sizes: List[int] = [8, 16],
+        layer_sizes: tuple[int, ...] = (8, 16),
         loss_weight: float = 1.0,
         loss_name: str = "mock_loss",
         model_name: str = "default_model_name",
@@ -69,14 +69,14 @@ class BaseTrainer:
         self.loss_name = loss_name
         self.layer_sizes = layer_sizes
         self.model_name = model_name
-        self.model_save_path = os.path.join(FILE_PATH, "models", model_name)
+        self.model_save_path = os.path.join(FILE_PATH, "..", "models", model_name)
         if not os.path.exists(self.model_save_path):
             os.makedirs(self.model_save_path)
 
         self.model_params_save_path = os.path.join(
-            FILE_PATH, "models", model_name + "_params.json"
+            FILE_PATH, "..", "models", model_name + "_params.json"
         )
-        with open(self.model_params_save_path, "w") as f:
+        with open(self.model_params_save_path, "w", encoding="utf-8") as f:
             json.dump(self.__dict__, f, indent=4)
 
         self.loss_fn: _Loss
@@ -85,13 +85,15 @@ class BaseTrainer:
         else:
             raise NotImplementedError("Specified loss function is not defined.")
 
-        self.val_loss_per_epoch: List[float] = []
+        self.val_loss_per_epoch: list[float] = []
 
     def __repr__(self) -> str:
+        """Return string representation of the Trainer as training parameters."""
         return str(self.__dict__)
 
     @torch.no_grad()
     def validate(self, model: Module, val_dataloader: DataLoader) -> float:
+        """Run validation loop."""
         model.eval()
         val_losses = []
         for input_data, target_label in val_dataloader:
@@ -103,6 +105,7 @@ class BaseTrainer:
         return torch.stack(val_losses).mean().item()
 
     def train(self, current_fold: int = 0) -> Module:
+        """Train model."""
         tr_dataset = DATASETS[self.dataset](
             mode="train",
             n_folds=self.n_folds,
@@ -147,7 +150,7 @@ class BaseTrainer:
             if (epoch + 1) % self.validation_period == 0:
                 val_loss = self.validate(model, val_dataloader)
                 print(
-                    f"Epoch: {epoch+1}/{self.n_epochs} | Tr.Loss: {avg_tr_loss} | Val.Loss: {val_loss}"
+                    f"Epoch: {epoch + 1}/{self.n_epochs} | Tr.Loss: {avg_tr_loss} | Val.Loss: {val_loss}"
                 )
                 self.val_loss_per_epoch.append(val_loss)
                 early_stopping.step(val_loss)
@@ -162,10 +165,6 @@ class BaseTrainer:
                     best_loss = val_loss
 
         return model
-
-    def select_model(self) -> None:
-        """A post processing method to combine trained cross validation models to be used later for inference."""
-        return
 
 
 if __name__ == "__main__":
