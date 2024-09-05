@@ -35,7 +35,9 @@ def test_trainer() -> None:
     """Test if the experiment module works properly."""
     training_params = {
         # "conv_size": 48,
-        # "n_epochs": 100,
+        "dataset": "mock_dataset",
+        "n_epochs": 100,
+        "learning_rate": 0.005,
     }
     trainer = BaseTrainer(**training_params)
     trainer.train()
@@ -50,7 +52,7 @@ def test_inferer() -> None:
     )
     inference_params = {
         #"conv_size": 48,
-        target_model_path,
+        "model_path": target_model_path,
     }
     inferer = BaseInferer(**inference_params)
     current_results = inferer.run("test")
