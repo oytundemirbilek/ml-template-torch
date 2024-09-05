@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import Any
 
+import numpy as np
 import torch
 from torch.nn import Module
 from torch.utils.data import DataLoader
@@ -18,8 +20,6 @@ DATASETS = {
     "another_mock_dataset": MockDataset,
 }
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 
 class BaseInferer:
     """Inference loop for a trained model. Run the testing scheme."""
@@ -32,6 +32,8 @@ class BaseInferer:
         model_params: dict[str, Any] | None = None,
         out_path: str | None = None,
         metric_name: str = "mock_loss",
+        random_seed: int = 0,
+        device: str | None = None,
     ) -> None:
         """
         Initialize the inference (or testing) setup.
@@ -53,8 +55,14 @@ class BaseInferer:
             Metric to evaluate the test performance of the model.
         """
         self.dataset = dataset
+        self.device = device
+        if device is None:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        np.random.seed(random_seed)
+        torch.manual_seed(random_seed)
         self.model_path = model_path
         self.out_path = out_path
+        self.random_seed = random_seed
         self.model_params = model_params
         self.model: Module
         if model is None:
@@ -62,7 +70,9 @@ class BaseInferer:
                 raise ValueError("Specify a model or model params and its path.")
             if model_path is None:
                 raise ValueError("Specify a model or model params and its path.")
-            self.model = self.load_model_from_file(model_path, model_params)
+            self.model = self.load_model_from_file(
+                model_path, model_params, self.device
+            )
         else:
             self.model = model
 
@@ -114,7 +124,7 @@ class BaseInferer:
 
     @staticmethod
     def load_model_from_file(
-        model_path: str, model_params: dict[str, Any]
+        model_path: str, model_params: dict[str, Any], device: str | None = None
     ) -> Module:
         """
         Load a pretrained model from file.
@@ -132,5 +142,12 @@ class BaseInferer:
             Pretrained model ready for inference, or continue training.
         """
         model = MockModel(**model_params).to(device)
-        model.load_state_dict(torch.load(model_path + ".pth"))
+        if not model_path.endswith(".pth"):
+            model_path += ".pth"
+        model.load_state_dict(
+            torch.load(
+                model_path,
+                map_location=torch.device(device) if device is not None else None,
+            )
+        )
         return model

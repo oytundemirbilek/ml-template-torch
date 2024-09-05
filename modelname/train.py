@@ -23,10 +23,11 @@ torch.manual_seed(35813)
 
 # These two options should be seed to ensure reproducible (If you are using cudnn backend)
 # https://pytorch.org/docs/stable/notes/randomness.html
-cudnn.deterministic = True
-cudnn.benchmark = False
+if torch.cuda.is_available():
+    from torch.backends import cudnn
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    cudnn.deterministic = True
+    cudnn.benchmark = False
 
 FILE_PATH = os.path.dirname(__file__)
 
@@ -57,7 +58,15 @@ class BaseTrainer:
         loss_weight: float = 1.0,
         loss_name: str = "mock_loss",
         model_name: str = "default_model_name",
+        random_seed: int = 0,
+        device: str | None = None,
     ) -> None:
+        np.random.seed(random_seed)
+        torch.manual_seed(random_seed)
+        self.device = device
+        if device is None:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.random_seed = random_seed
         self.dataset = dataset
         self.timepoint = timepoint
         self.n_epochs = n_epochs
@@ -112,11 +121,15 @@ class BaseTrainer:
             mode="train",
             n_folds=self.n_folds,
             current_fold=current_fold,
+            random_seed=self.random_seed,
+            device=self.device,
         )
         val_dataset = DATASETS[self.dataset](
             mode="validation",
             n_folds=self.n_folds,
             current_fold=current_fold,
+            random_seed=self.random_seed,
+            device=self.device,
         )
         tr_dataloader = DataLoader(
             tr_dataset,
@@ -133,7 +146,7 @@ class BaseTrainer:
             out_features=1,
             batch_size=self.batch_size,
             layer_sizes=self.layer_sizes,
-        ).to(device)
+        ).to(self.device)
         optimizer = torch.optim.AdamW(
             model.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay
         )

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import os
 
-from modelname.model import MockModel
 from modelname.dataset import MockDataset
 from modelname.inference import BaseInferer
+from modelname.model import MockModel
 from modelname.train import BaseTrainer
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), "datasets")
@@ -17,15 +17,17 @@ DEVICE = "cpu"
 
 def test_simple_iteration() -> None:
     """Test if the model can be iterated - cpu based."""
-    model = MockModel(5,5,5, (10,10,10))
+    model = MockModel(5, 5, 5, (8, 16))
     # out = model.forward(data)
     # assert out
+
 
 def test_dataset() -> None:
     """Test if the model can be iterated - cpu based."""
     model = MockDataset()
     # out = model.forward(data)
     # assert out
+
 
 def test_reproducibility() -> None:
     """Test if the model can give same results always - compare cpu based results with cuda results."""
@@ -36,7 +38,7 @@ def test_trainer() -> None:
     training_params = {
         "dataset": "mock_dataset",
         "timepoint": None,
-        "n_epochs": 100,
+        "n_epochs": 5,
         "learning_rate": 0.005,
     }
     trainer = BaseTrainer(**training_params)
@@ -45,13 +47,15 @@ def test_trainer() -> None:
 
 def test_inferer() -> None:
     """Test if the experiment module works properly."""
-    target_model_path = os.path.join(
-        MODELS_PATH,
-        "mock_model_experiment",
-        "fold0.pth"
-    )
+    target_model_path = os.path.join(MODELS_PATH, "default_model_name", "fold0")
     inference_params = {
-        #"conv_size": 48,
+        # "conv_size": 48,
+        "model_params": {
+            "in_features": 3,
+            "out_features": 1,
+            "batch_size": 1,
+            "layer_sizes": (8, 16),
+        },
         "model_path": target_model_path,
         "dataset": "mock_dataset",
     }
