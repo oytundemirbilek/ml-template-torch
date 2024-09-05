@@ -227,7 +227,7 @@ html.show_contexts = true
 html.skip_covered = false
 
 [tool.pyright]
-pythonVersion = "3.x"
+pythonVersion = "3.12"
 
 [tool.codespell]
 count = true
