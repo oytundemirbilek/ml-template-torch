@@ -34,8 +34,8 @@ def test_reproducibility() -> None:
 def test_trainer() -> None:
     """Test if the experiment module works properly."""
     training_params = {
-        # "conv_size": 48,
         "dataset": "mock_dataset",
+        "timepoint": None,
         "n_epochs": 100,
         "learning_rate": 0.005,
     }
@@ -53,6 +53,7 @@ def test_inferer() -> None:
     inference_params = {
         #"conv_size": 48,
         "model_path": target_model_path,
+        "dataset": "mock_dataset",
     }
     inferer = BaseInferer(**inference_params)
     current_results = inferer.run("test")
