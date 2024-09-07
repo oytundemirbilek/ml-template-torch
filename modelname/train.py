@@ -7,9 +7,9 @@ import os
 
 import numpy as np
 import torch
-from torch.backends import cudnn
 from torch.nn import Module
 from torch.nn.modules.loss import _Loss
+from torch.optim import AdamW  # type: ignore[attr-defined]
 from torch.utils.data import DataLoader
 
 from modelname.dataset import MockDataset, mock_batch_collate_fn
@@ -147,7 +147,7 @@ class BaseTrainer:
             batch_size=self.batch_size,
             layer_sizes=self.layer_sizes,
         ).to(self.device)
-        optimizer = torch.optim.AdamW(
+        optimizer = AdamW(
             model.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay
         )
         early_stopping = EarlyStopping(self.patience)

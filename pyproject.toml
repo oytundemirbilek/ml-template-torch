@@ -181,7 +181,7 @@ pylint.max-args = 15
 pylint.max-positional-args = 15
 preview = true
 
-[tool.ruff.extend-per-file-ignores]
+[tool.ruff.lint.extend-per-file-ignores]
 "__init__.py" = ["F401","F403"]
 "test_*.py" = ["S101", "PLR2004"]
 

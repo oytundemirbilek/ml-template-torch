@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from typing import Any
 
 from modelname.dataset import MockDataset
 from modelname.inference import BaseInferer
@@ -18,13 +19,15 @@ DEVICE = "cpu"
 def test_simple_iteration() -> None:
     """Test if the model can be iterated - cpu based."""
     model = MockModel(5, 5, 5, (8, 16))
+    assert model is not None
     # out = model.forward(data)
     # assert out
 
 
 def test_dataset() -> None:
     """Test if the model can be iterated - cpu based."""
-    model = MockDataset()
+    dataset = MockDataset()
+    assert dataset is not None
     # out = model.forward(data)
     # assert out
 
@@ -35,7 +38,7 @@ def test_reproducibility() -> None:
 
 def test_trainer() -> None:
     """Test if the experiment module works properly."""
-    training_params = {
+    training_params: dict[str, Any] = {
         "dataset": "mock_dataset",
         "timepoint": None,
         "n_epochs": 5,
@@ -48,7 +51,7 @@ def test_trainer() -> None:
 def test_inferer() -> None:
     """Test if the experiment module works properly."""
     target_model_path = os.path.join(MODELS_PATH, "default_model_name", "fold0")
-    inference_params = {
+    inference_params: dict[str, Any] = {
         # "conv_size": 48,
         "model_params": {
             "in_features": 3,
@@ -60,5 +63,5 @@ def test_inferer() -> None:
         "dataset": "mock_dataset",
     }
     inferer = BaseInferer(**inference_params)
-    current_results = inferer.run("test")
+    current_results = inferer.run()
     assert current_results
