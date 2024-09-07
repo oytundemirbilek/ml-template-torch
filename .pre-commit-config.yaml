@@ -1,0 +1,220 @@
+---
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: no-commit-to-branch
+        args: ["--branch", "master", "--branch", "main"]
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: detect-private-key
+      - id: check-xml
+      - id: check-json
+      - id: check-toml
+      - id: check-ast
+      - id: check-case-conflict
+      - id: pretty-format-json
+        args: ["--autofix", "--indent=4", "--no-sort-keys", "--no-ensure-ascii"]
+        exclude: "(?i)\\.ipynb"
+      - id: debug-statements
+      - id: name-tests-test
+        args: ["--pytest-test-first"]
+
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      - id: python-check-blanket-noqa
+      - id: python-check-blanket-type-ignore
+      - id: rst-directive-colons
+      - id: rst-inline-touching-normal
+      - id: text-unicode-replacement-char
+
+  - repo: local
+    hooks:
+      - id: forbid-binary
+        name: forbid committing binary files
+        language: system
+        entry: bash
+        args:
+          - "-c"
+          - |
+            for filename in "$@"; do
+              echo "Binary file detected: \"${filename}\""
+            done
+            false
+          - "--"
+        types: ["binary"]
+        exclude: "(?i)\\.(png|jpg|pth)"
+
+      - id: check-utf8
+        name: Check text files for UTF-8 Encoding
+        language: system
+        entry: bash
+        args:
+          - "-c"
+          - |
+            is_failed=0
+            for filename in "$@"; do
+              iconv --from-code=UTF-8 --to-code=UTF-8 --output=/dev/null "${filename}" ||
+                { echo "Text file is not encoded in UTF-8: \"${filename}\"" ; is_failed=1 ; }
+            done
+            [[ ${is_failed} == 0 ]] || false
+          - "--"
+        exclude: "(?i)\\.(png|jpg|pth)"
+
+      - id: check-eol
+        name: Check text files for correct end of line sequence
+        language: pygrep
+        entry: "(\\r|\\r\\n)$"
+        types: ["text"]
+      - id: forbid-tabs
+        name: Check text files to not contain tab character
+        language: pygrep
+        entry: "\\t"
+        types: ["text"]
+        exclude: "(?i)datasets/.*"
+      - id: mypy
+        name: mypy
+        entry: mypy
+        language: system
+        require_serial: true
+        types: [python]
+
+  # -   repo: https://github.com/pre-commit/mirrors-mypy
+  #     rev: v1.5.1
+  #     hooks:
+  #     -   id: mypy
+
+  - repo: https://github.com/jorisroovers/gitlint
+    rev: v0.19.1
+    hooks:
+      - id: gitlint
+        args:
+          - "--ignore-stdin"
+          - "--ignore"
+          - "body-is-missing"
+          - "-c"
+          - "title-min-length.min-length=4"
+          - "-c"
+          - "title-max-length.line-length=50"
+          - "-c"
+          - "body-max-line-length.line-length=72"
+          - "-c"
+          - "title-match-regex.regex=^[A-Z].*"
+          - "--msg-filename"
+      - id: gitlint-ci
+        args:
+          - "--ignore"
+          - "body-is-missing"
+
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.33.0
+    hooks:
+      - id: yamllint
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.7
+    hooks:
+      - id: bandit
+        args: ["--configfile", "pyproject.toml"]
+        additional_dependencies: ["bandit[toml]"]
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        additional_dependencies:
+          - mccabe
+          - flake8-pyproject
+          - flake8-noqa
+          - flake8-bugbear
+          - pep8-naming
+          - flake8-builtins
+          - flake8-docstrings
+          - flake8-comprehensions
+          - flake8-simplify
+          - flake8-logging
+        args: ['--max-line-length=120', "--docstring-convention=numpy"]
+
+  - repo: https://github.com/psf/black
+    rev: 24.1.1
+    hooks:
+      - id: black
+        args: ["--check", "--diff"]
+        # - id: black-jupyter
+
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.15.0
+    hooks:
+      - id: pyupgrade
+        args: [--py37-plus]
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.6
+    hooks:
+      - id: codespell
+        additional_dependencies:
+          - tomli
+        exclude: "(?i)notebooks.*"
+
+  - repo: https://github.com/bridgecrewio/checkov
+    rev: 3.2.5
+    hooks:
+      - id: checkov
+        name: checkov github_actions
+        entry: checkov
+        always_run: true
+        pass_filenames: false
+        args:
+          - "--quiet"
+          - "--framework"
+          - "github_configuration"
+          - "github_actions"
+          - "--directory"
+          - "."
+      - id: checkov_secrets
+        entry: checkov
+        args:
+          - "--framework"
+          - "secrets"
+          - "--enable-secret-scan-all-files"
+          - "--skip-check"
+          - "CKV_SECRET_6"
+          - "--file"
+
+  # -   repo: https://github.com/python-jsonschema/check-jsonschema
+  #     rev: 0.27.3
+  #     hooks:
+  #         - id: check-github-workflows
+  #         - id: check-github-actions
+  #         - id: check-readthedocs
+  #         - id: check-jsonschema
+  #           args:
+  #             - "--schemafile"
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ["--check", "--diff"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.2.0
+    hooks:
+      - id: ruff
+        args:
+          - --output-format=github
+      - id: ruff-format
+        args:
+          - --diff
+        stages: ["manual"]

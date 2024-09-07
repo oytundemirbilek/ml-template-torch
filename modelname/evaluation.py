@@ -1,7 +1,8 @@
 """Module that provides calculations for loss functions and evaluation metrics."""
+
 import torch
 from torch import Tensor
-from torch.nn.modules.loss import _Loss
+from torch.nn.modules.loss import _Loss  # noqa: PLC2701
 
 
 class MockLoss(_Loss):

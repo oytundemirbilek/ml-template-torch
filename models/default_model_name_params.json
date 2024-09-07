@@ -1,4 +1,6 @@
 {
+    "device": "cpu",
+    "random_seed": 0,
     "dataset": "mock_dataset",
     "timepoint": null,
     "n_epochs": 20,
@@ -14,7 +16,7 @@
         8,
         16
     ],
-    "model_name": "mock_model_experiment",
-    "model_save_path": "/home/oytun/GitRepos/ml-template-torch/modelname/../models/mock_model_experiment",
-    "model_params_save_path": "/home/oytun/GitRepos/ml-template-torch/modelname/../models/mock_model_experiment_params.json"
+    "model_name": "default_model_name",
+    "model_save_path": "/home/oytun/GitRepos/ml-template-torch/modelname/../models/default_model_name",
+    "model_params_save_path": "/home/oytun/GitRepos/ml-template-torch/modelname/../models/default_model_name_params.json"
 }

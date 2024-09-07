@@ -12,13 +12,8 @@ from torch import Tensor
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import default_collate
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 ROOT_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(ROOT_PATH, "..", "datasets")
-
-# You can use such a random seed 35813 (part of the Fibonacci Sequence).
-np.random.seed(35813)
 
 
 def mock_batch_collate_fn(batch_data: list[Tensor]) -> Tensor:
@@ -36,6 +31,8 @@ class BaseDataset(Dataset):
         n_folds: int = 5,
         current_fold: int = 0,
         in_memory: bool = False,
+        device: str | torch.device | None = None,
+        random_seed: int = 0,
     ):
         """
         Dataset class to initialize data operations, cross validation and preprocessing.
@@ -63,7 +60,10 @@ class BaseDataset(Dataset):
         self.in_memory = in_memory
         self.path_to_data = path_to_data
         self.current_fold = current_fold
-
+        if device is None:
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = device
+        self.random_seed = random_seed
         self.n_samples_total = self.get_number_of_samples()
 
         # Keep half of the data as 'unseen' to be used in inference.
@@ -117,8 +117,12 @@ class BaseDataset(Dataset):
     def __getitem__(self, index: int) -> tuple[Tensor, Tensor | None]:
         """Get one sample."""
         if self.in_memory:
-            label = None if self.mode == "inference" else torch.from_numpy(self.samples_labels[index]).to(device)
-            sample_data = torch.from_numpy(self.loaded_samples[index]).to(device)
+            label = (
+                None
+                if self.mode == "inference"
+                else torch.from_numpy(self.samples_labels[index]).to(self.device)
+            )
+            sample_data = torch.from_numpy(self.loaded_samples[index]).to(self.device)
         else:
             sample_data, label = self.get_sample_data(index)
         return self.preprocess(sample_data), label
@@ -177,9 +181,9 @@ class BaseDataset(Dataset):
                 sample_data_row.drop(["Sample ID", "Label"], axis="columns").values
             )
             .float()
-            .to(device)
+            .to(self.device)
         )
-        sample_label = torch.from_numpy(sample_data_row["Label"].values).to(device)
+        sample_label = torch.from_numpy(sample_data_row["Label"].values).to(self.device)
         return sample_data, sample_label
 
     def preprocess(self, data: Tensor) -> Tensor:  # noqa: PLR6301
@@ -246,12 +250,10 @@ class MockDataset(BaseDataset):
         n_folds: int = 5,
         current_fold: int = 0,
         in_memory: bool = False,
+        device: str | torch.device | None = None,
+        random_seed: int = 0,
     ):
         mock_data_path = os.path.join(DATA_PATH, "mock_dataset.csv")
         super().__init__(
-            mock_data_path,
-            mode,
-            n_folds,
-            current_fold,
-            in_memory,
+            mock_data_path, mode, n_folds, current_fold, in_memory, device, random_seed
         )

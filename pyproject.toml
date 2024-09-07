@@ -27,11 +27,11 @@ classifiers = [
 ]
 
 dependencies = [
-    "numpy",
+    "numpy<2", # still having problems with older torch versions
     "pandas",
     "scikit-learn",
-    "torch",
-    "torchvision",
+    "torch; platform_system != 'Linux'",
+    # "torchvision", # if needed
     "matplotlib",
     "seaborn",
 ]
@@ -181,7 +181,7 @@ pylint.max-args = 15
 pylint.max-positional-args = 15
 preview = true
 
-[tool.ruff.extend-per-file-ignores]
+[tool.ruff.lint.extend-per-file-ignores]
 "__init__.py" = ["F401","F403"]
 "test_*.py" = ["S101", "PLR2004"]
 
@@ -227,7 +227,7 @@ html.show_contexts = true
 html.skip_covered = false
 
 [tool.pyright]
-pythonVersion = "3.x"
+pythonVersion = "3.12"
 
 [tool.codespell]
 count = true
