@@ -40,7 +40,7 @@ DATASETS = {
 class BaseTrainer:
     """Wrapper around training function to save all the training parameters."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         # Data related:
         dataset: str,
