@@ -64,4 +64,4 @@ def test_inferer() -> None:
     }
     inferer = BaseInferer(**inference_params)
     current_results = inferer.run()
-    assert current_results
+    assert current_results is not None

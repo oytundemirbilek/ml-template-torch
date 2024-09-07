@@ -7,10 +7,11 @@ from typing import Any
 
 import numpy as np
 import torch
+from torch import Tensor
 from torch.nn import Module
 from torch.utils.data import DataLoader
 
-from modelname.dataset import MockDataset, mock_batch_collate_fn
+from modelname.dataset import MockDataset
 from modelname.evaluation import MockLoss
 from modelname.model import MockModel
 
@@ -76,23 +77,23 @@ class BaseInferer:
             self.model = model
 
         self.dataset = dataset
-
+        self.metric_name = metric_name
         if metric_name == "mock_loss":
             self.metric = MockLoss()
         else:
             raise NotImplementedError()
 
     @torch.no_grad()
-    def run(self, test_split_only: bool = True) -> list[float]:
+    def run(self, mode: str = "test", save_predictions: bool = False) -> Tensor:
         """
         Run inference loop whether for testing purposes or in-production.
 
         Parameters
         ----------
-        test_split_only: bool
-            Whether to use all dataset samples or just the testing split. This can be handy
-            when testing a pretrained model on your private dataset. Set false if you want to
-            use your model in production.
+        mode: string
+            Either 'test' or 'infer'. Whether to use all dataset samples or just the testing split.
+            This can be handy when testing a pretrained model on your private dataset. Set 'infer'
+            if you want to use your model in production.
 
         Returns
         -------
@@ -100,26 +101,44 @@ class BaseInferer:
             Test loss for each sample. Or any metric you will define. Calculates only if test_split_only is True.
         """
         self.model.eval()
-        test_losses = []
 
-        mode = "test" if test_split_only else "inference"
-
-        test_dataset = DATASETS[self.dataset](mode=mode, n_folds=1)
-        test_dataloader = DataLoader(
-            test_dataset,
-            batch_size=1,
-            collate_fn=mock_batch_collate_fn,
+        test_dataset = DATASETS[self.dataset](
+            mode=mode,
+            n_folds=1,
+            device=self.device,
         )
-        for idx, (input_data, target_label) in enumerate(test_dataloader):
+        test_dataloader = DataLoader(test_dataset, batch_size=1)
+        save_path = os.path.join(
+            ".",
+            "benchmarks",
+            "modelname",
+            self.metric_name,
+            self.dataset,
+        )
+        if not os.path.exists(os.path.join(save_path, "predictions")):
+            os.makedirs(os.path.join(save_path, "predictions"))
+        if not os.path.exists(os.path.join(save_path, "targets")):
+            os.makedirs(os.path.join(save_path, "targets"))
+
+        test_losses = []
+        for s_idx, (input_data, target_label) in enumerate(test_dataloader):
             prediction = self.model(input_data)
-            if self.out_path is not None:
-                torch.save(prediction, os.path.join(self.out_path, f"sample_{idx}.pt"))
-            if test_split_only:
+            if mode == "test":
                 test_loss = self.metric(prediction, target_label)
                 test_losses.append(test_loss.item())
+            if save_predictions:
+                np.savetxt(
+                    os.path.join(save_path, "predictions", f"subject{s_idx}_pred.txt"),
+                    prediction.squeeze(0).cpu().numpy(),
+                )
+            if save_predictions and mode == "test":
+                np.savetxt(
+                    os.path.join(save_path, "targets", f"subject{s_idx}_tgt.txt"),
+                    target_label.squeeze(0).cpu().numpy(),
+                )
 
         self.model.train()
-        return test_losses
+        return torch.tensor(test_losses)
 
     @staticmethod
     def load_model_from_file(
