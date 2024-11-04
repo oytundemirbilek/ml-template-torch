@@ -1,1 +1,11 @@
-{}
+{
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true
+    },
+    "window.zoomLevel": -1,
+    "dev.containers.executeInWSL": true,
+    "notebook.defaultFormatter": "ms-python.black-formatter",
+    "notebook.formatOnSave.enabled": true,
+    "notebook.formatOnCellExecution": true
+}

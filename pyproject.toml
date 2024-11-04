@@ -55,6 +55,8 @@ docs = [
     "furo",
 ]
 lint = [
+    "ipykernel",
+    "jupyter-black",
     "isort",
     "black",
     "pyupgrade",
@@ -143,7 +145,7 @@ exclude_dirs = ["tests", ".venv"]
 verbose = true
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 extend-include = ["*.ipynb", ".*_version.py"]
 output-format = "grouped"
 line-length = 120
@@ -227,7 +229,7 @@ html.show_contexts = true
 html.skip_covered = false
 
 [tool.pyright]
-pythonVersion = "3.12"
+pythonVersion = "3.10"
 
 [tool.codespell]
 count = true

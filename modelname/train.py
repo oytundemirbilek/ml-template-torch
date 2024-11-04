@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from torch.nn import Module
 from torch.nn.modules.loss import _Loss
-from torch.optim import AdamW  # type: ignore[attr-defined]
+from torch.optim import AdamW
 from torch.utils.data import DataLoader
 
 from modelname.dataset import MockDataset, mock_batch_collate_fn
